@@ -11,6 +11,9 @@ is_git_repo() {
 
 is_git_repo
 
+COMMITS="5"
+SKIP="0"
+
 while [[ $# -gt 1 ]]
 do
 key="$1"
@@ -18,6 +21,10 @@ key="$1"
 case $key in
     -c| --commits)
     COMMITS="$2"
+    shift
+    ;;
+	-s|--skip)
+    SKIP="$2"
     shift
     ;;
     *)
@@ -43,10 +50,7 @@ then
     datefmt=%ci
 fi
 
-if [ -n "${COMMITS+set}" ];
-then git log -n $COMMITS --pretty=format:"$datefmt | %H | %s" > $tmpfile;
-else git log -n 5 --pretty=format:"$datefmt | %H | %s" > $tmpfile;
-fi
+git log -n $COMMITS --skip=$SKIP --pretty=format:"$datefmt | %H | %s" > $tmpfile;
 
 ${VISUAL:-${EDITOR:-vi}} $tmpfile
 
@@ -71,7 +75,7 @@ while read commit; do
     ENVFILTER="$ENVFILTER$COMMIT_ENV"
 done < $tmpfile
 
-git filter-branch -f --env-filter "$ENVFILTER" HEAD~$COMMITS..HEAD >/dev/null
+git filter-branch -f --env-filter "$ENVFILTER" >/dev/null
 if [ $? = 0 ] ; then
     echo "Git commit dates updated. Run 'git push -f BRANCH_NAME' to push your changes."
 else
